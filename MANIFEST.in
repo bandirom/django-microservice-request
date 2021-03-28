@@ -1,0 +1,5 @@
+include LICENSE
+include README.rst
+global-exclude *.pyc
+global-exclude .ropeproject/*
+recursive-include docs *
