@@ -31,7 +31,7 @@ class Service:
     lookup_prefix = ''
     service = None
     url = ''
-    api_header = settings.API_KEY_HEADER
+    api_header = getattr(settings, 'API_KEY_HEADER', 'X-ACCESS-KEY')
     api_key = ''
     http_method_names = ['get', 'post', 'put', 'delete']
 
@@ -82,6 +82,7 @@ class MicroServiceConnect(Service):
         return self.additional_method_names
 
     def custom_headers(self) -> dict:
+        """Provide additional headers here"""
         return {}
 
     @property
@@ -114,7 +115,7 @@ class MicroServiceConnect(Service):
 
     def convert_service_url(self, url: str) -> str:
         """For pagination response"""
-        url = url.replace(self.service, settings.CUSTOMER_HOST)
+        url = url.replace(self.service, getattr(settings, 'GATEWAY_HOST', self.request.get_host()))
         url = url.replace(self.url_pagination_before, self.url_pagination_after)
         return url
 
