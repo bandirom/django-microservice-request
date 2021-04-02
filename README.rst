@@ -24,6 +24,22 @@ Quick start
         'microservice_request',
     ]
 
+3. In settings.py set the follow settings::
+
+    # Custom api key header
+    API_KEY_HEADER = os.environ.get('API_KEY_HEADER', 'X-Custom-Header')
+    # Custom api key
+    API_KEY = os.environ.get('API_KEY', 'api-secret-key')
+
+    # Requested header will be:
+    # Authorization: X-Custom-Header api-secret-key
+
+
+For key generating recommend to use
+https://florimondmanca.github.io/djangorestframework-api-key/
+
+
+
 3. For example you have 2 deployed projects. First project will be ApiGateway and second will be ArticleBlog
     Create a new application for set separated route:
 
@@ -33,5 +49,3 @@ Quick start
     or
 
         python manage.py startapp router_article
-
-
