@@ -61,6 +61,7 @@ class Service:
 
 
 class MicroServiceConnect(Service):
+    SEND_COOKIES = getattr(settings, 'REQUEST_SEND_COOKIES', False)
     url_pagination_before = ''
     url_pagination_after = ''
     additional_method_names = ['send_file']
@@ -85,6 +86,10 @@ class MicroServiceConnect(Service):
         """Provide additional headers here"""
         return {}
 
+    def connection_refused_error(self) -> str:
+        """Logger error if connection refused"""
+        return f"Connection error in  {self.__str__()}"
+
     @property
     def headers(self) -> dict:
         headers = super().authorization_header
@@ -93,25 +98,46 @@ class MicroServiceConnect(Service):
         headers.update(self.custom_headers())
         return headers
 
-    @request_shell
-    def get(self, params=None, **kwargs):
-        return self.host.session.get(self.url, params=params or self.request.GET, headers=self.headers)
+    def get_cookies(self) -> dict:
+        return self.request.COOKIES
+
+    def _requested_data(self) -> dict:
+        data = dict(
+            url=self.url,
+            headers=self.headers,
+            cookies=self.get_cookies() if self.SEND_COOKIES else None
+        )
+        return data
 
     @request_shell
-    def post(self, data=None, **kwargs):
-        return self.host.session.post(self.url, json=data or self.request.data, headers=self.headers)
+    def get(self, params: dict = None, **kwargs):
+        request_data = self._requested_data()
+        request_data.update(params=params or self.request.GET)
+        return self.host.session.get(**request_data)
 
     @request_shell
-    def put(self, **kwargs):
-        return self.host.session.put(self.url, data=self.request.data, headers=self.headers)
+    def post(self, data: dict = None, **kwargs):
+        request_data = self._requested_data()
+        request_data.update(json=data or self.request.data)
+        return self.host.session.post(**request_data)
+
+    @request_shell
+    def put(self, data: dict = None, **kwargs):
+        request_data = self._requested_data()
+        request_data.update(data=data or self.request.data)
+        return self.host.session.put(**request_data)
 
     @request_shell
     def delete(self, **kwargs):
-        return self.host.session.delete(self.url, data=self.request.data, headers=self.headers)
+        request_data = self._requested_data()
+        request_data.update(data=self.request.data)
+        return self.host.session.delete(**request_data)
 
     @request_shell
     def send_file(self, files: dict, data: dict = None, **kwargs):
-        return self.host.session.post(self.url, data=data, files=files, headers=self.headers)
+        request_data = self._requested_data()
+        request_data.update(data=data or self.request.data, files=files)
+        return self.host.session.post(**request_data)
 
     def convert_service_url(self, url: str) -> str:
         """For pagination response"""
@@ -122,6 +148,7 @@ class MicroServiceConnect(Service):
     def service_response(self, method: str = None, **kwargs):
         response = self.request_to_service(method=method, **kwargs)
         if not getattr(response, 'status_code', None):
+            logger.error(self.connection_refused_error())
             return Response({'detail': 'connection refused'}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(response.json(), status=response.status_code)
 
