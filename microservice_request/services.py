@@ -1,4 +1,5 @@
 import logging
+from typing import Union, List
 
 from django.conf import settings
 from requests import Session, Response as RequestResponse
@@ -28,11 +29,11 @@ class HostService:
 
 
 class Service:
-    lookup_prefix = ''
-    service = None
-    url = ''
+    lookup_prefix: str = ''
+    service: str = None
+    url: str = ''
     api_header = getattr(settings, 'API_KEY_HEADER', 'X-ACCESS-KEY')
-    api_key = ''
+    api_key: str = ''
     http_method_names = ['get', 'post', 'put', 'delete']
 
     def __init__(self):
@@ -61,10 +62,11 @@ class Service:
 
 
 class MicroServiceConnect(Service):
-    SEND_COOKIES = getattr(settings, 'REQUEST_SEND_COOKIES', False)
+    SEND_COOKIES: bool = getattr(settings, 'REQUEST_SEND_COOKIES', False)
     url_pagination_before = ''
     url_pagination_after = ''
     additional_method_names = ['send_file']
+    error_status_code = HTTP_500_INTERNAL_SERVER_ERROR
 
     def __init__(self, request, url, **kwargs):
         super().__init__()
@@ -79,7 +81,7 @@ class MicroServiceConnect(Service):
         )
         raise MethodNotAllowed(method)
 
-    def get_additional_method_names(self):
+    def get_additional_method_names(self) -> list:
         return self.additional_method_names
 
     def custom_headers(self) -> dict:
@@ -89,6 +91,10 @@ class MicroServiceConnect(Service):
     def connection_refused_error(self) -> str:
         """Logger error if connection refused"""
         return f"Connection error in  {self.__str__()}"
+
+    def error_handler(self, method: str):
+        """Redefine for handling connection errors"""
+        pass
 
     @property
     def headers(self) -> dict:
@@ -116,7 +122,7 @@ class MicroServiceConnect(Service):
         return self.host.session.get(**request_data)
 
     @request_shell
-    def post(self, data: dict = None, **kwargs):
+    def post(self, data: Union[dict, List[dict]] = None, **kwargs):
         request_data = self._requested_data()
         request_data.update(json=data or self.request.data)
         return self.host.session.post(**request_data)
@@ -149,7 +155,8 @@ class MicroServiceConnect(Service):
         response = self.request_to_service(method=method, **kwargs)
         if not getattr(response, 'status_code', None):
             logger.error(self.connection_refused_error())
-            return Response({'detail': 'connection refused'}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+            self.error_handler(method)
+            return Response({'detail': 'connection refused'}, status=self.error_status_code)
         return Response(response.json(), status=response.status_code)
 
     def request_to_service(self, method: str = None, **kwargs) -> RequestResponse:

@@ -1,3 +1,11 @@
+0.1.3.3 (2021-04-09)
+********************
+- Fixed and added Union typing in post method
+- Added error handler method if request to microservice return None
+- Added error_code variable
+- Added different typing
+
+
 0.1.3 (2021-04-06)
 ******************
 - Added logger if connection refused
