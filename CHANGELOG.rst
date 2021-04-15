@@ -1,3 +1,9 @@
+0.1.3.4 (2021-04-15)
+********************
+
+- Fixed remote user middleware when id is not integer
+
+
 0.1.3.3 (2021-04-09)
 ********************
 - Fixed and added Union typing in post method
