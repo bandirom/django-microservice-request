@@ -88,11 +88,11 @@ class MicroServiceConnect(Service):
         """Provide additional headers here"""
         return {}
 
-    def connection_refused_error(self) -> str:
+    def connection_refused_error(self, response) -> str:
         """Logger error if connection refused"""
         return f"Connection error in  {self.__str__()}"
 
-    def error_handler(self, method: str):
+    def error_handler(self, method: str, response):
         """Redefine for handling connection errors"""
         pass
 
@@ -154,8 +154,8 @@ class MicroServiceConnect(Service):
     def service_response(self, method: str = None, **kwargs):
         response = self.request_to_service(method=method, **kwargs)
         if not getattr(response, 'status_code', None):
-            logger.error(self.connection_refused_error())
-            self.error_handler(method)
+            logger.error(self.connection_refused_error(response))
+            self.error_handler(method, response)
             return Response({'detail': 'connection refused'}, status=self.error_status_code)
         return Response(response.json(), status=response.status_code)
 
