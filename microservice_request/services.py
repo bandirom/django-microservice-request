@@ -102,7 +102,7 @@ class MicroServiceConnect(Service):
         headers = super().authorization_header
         headers['Accept-Language'] = self.request.headers.get('Accept-Language')
         headers['Remote-User'] = str(self.request.user.id)
-        headers.update(self.special_headers)
+        headers.update(self.special_headers if isinstance(self.special_headers, dict) else {})
         headers.update(self.custom_headers())
         return headers
 
