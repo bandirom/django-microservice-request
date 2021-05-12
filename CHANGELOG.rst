@@ -1,3 +1,9 @@
+0.1.3.6 (2021-05-12)
+********************
+
+- Added opportunities to use single headers for request
+
+
 0.1.3.5 (2021-04-26)
 ********************
 

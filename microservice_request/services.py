@@ -72,6 +72,7 @@ class MicroServiceConnect(Service):
         super().__init__()
         self.set_url(str(url))
         self.request = request
+        self.special_headers: dict = kwargs.get('special_headers', {})
 
     def http_method_not_allowed(self, **kwargs):
         method = kwargs.get('method', self.request.method)
@@ -101,6 +102,7 @@ class MicroServiceConnect(Service):
         headers = super().authorization_header
         headers['Accept-Language'] = self.request.headers.get('Accept-Language')
         headers['Remote-User'] = str(self.request.user.id)
+        headers.update(self.special_headers)
         headers.update(self.custom_headers())
         return headers
 
