@@ -28,19 +28,26 @@ class HostService:
         return session
 
 
-class Service:
+class ConnectionService:
     lookup_prefix: str = ''
     service: str = None
     url: str = ''
     api_header = getattr(settings, 'API_KEY_HEADER', 'X-ACCESS-KEY')
     api_key: str = ''
     http_method_names = ['get', 'post', 'put', 'delete']
+    error_status_code = HTTP_500_INTERNAL_SERVER_ERROR
+    additional_method_names = ['send_file']
 
-    def __init__(self):
+    def __init__(self, url, **kwargs):
+        self.special_headers: dict = kwargs.get('special_headers', {})
         self.host = HostService()
+        self.set_url(str(url))
 
     def _allowed_methods(self):
         return [m.upper() for m in self.http_method_names if hasattr(self, m)]
+
+    def get_additional_method_names(self) -> list:
+        return self.additional_method_names
 
     @property
     def allowed_methods(self):
@@ -60,31 +67,6 @@ class Service:
     def reverse_url(url: str, kwargs=None):
         return reverse_lazy(url, kwargs=kwargs)
 
-
-class MicroServiceConnect(Service):
-    SEND_COOKIES: bool = getattr(settings, 'REQUEST_SEND_COOKIES', False)
-    url_pagination_before = ''
-    url_pagination_after = ''
-    additional_method_names = ['send_file']
-    error_status_code = HTTP_500_INTERNAL_SERVER_ERROR
-
-    def __init__(self, request, url, **kwargs):
-        super().__init__()
-        self.set_url(str(url))
-        self.request = request
-        self.special_headers: dict = kwargs.get('special_headers', {})
-
-    def http_method_not_allowed(self, **kwargs):
-        method = kwargs.get('method', self.request.method)
-        logger.warning(
-            "Method Not Allowed (%s): %s. Add the name to 'additional_method_names'", method, self.request.path,
-            extra={'status_code': 405, 'request': self.request}
-        )
-        raise MethodNotAllowed(method)
-
-    def get_additional_method_names(self) -> list:
-        return self.additional_method_names
-
     def custom_headers(self) -> dict:
         """Provide additional headers here"""
         return {}
@@ -99,22 +81,92 @@ class MicroServiceConnect(Service):
 
     @property
     def headers(self) -> dict:
-        headers = super().authorization_header
-        headers['Accept-Language'] = self.request.headers.get('Accept-Language')
-        headers['Remote-User'] = str(self.request.user.id)
+        headers = self.authorization_header
         headers.update(self.special_headers if isinstance(self.special_headers, dict) else {})
         headers.update(self.custom_headers())
+        return headers
+
+    def http_method_not_allowed(self, **kwargs):
+        method = kwargs.get('method')
+        logger.warning(
+            "Method Not Allowed (%s). Add the name to 'additional_method_names'", method,
+            extra={'status_code': 405}
+        )
+        raise MethodNotAllowed(method)
+
+    def _requested_data(self) -> dict:
+        return dict(url=self.url, headers=self.headers)
+
+    @request_shell
+    def get(self, params: dict = None, **kwargs):
+        request_data = self._requested_data()
+        request_data.update(params=params)
+        return self.host.session.get(**request_data)
+
+    @request_shell
+    def post(self, data: Union[dict, List[dict]] = None, **kwargs):
+        request_data = self._requested_data()
+        request_data.update(json=data)
+        return self.host.session.post(**request_data)
+
+    @request_shell
+    def put(self, data: dict, **kwargs):
+        request_data = self._requested_data()
+        request_data.update(data=data)
+        return self.host.session.put(**request_data)
+
+    @request_shell
+    def delete(self, data: dict):
+        request_data = self._requested_data()
+        request_data.update(data=data)
+        return self.host.session.delete(**request_data)
+
+    @request_shell
+    def send_file(self, files: dict, data: dict = None, **kwargs):
+        request_data = self._requested_data()
+        request_data.update(data=data, files=files)
+        return self.host.session.post(**request_data)
+
+    def service_response(self, method: str = None, **kwargs):
+        response = self.request_to_service(method=method, **kwargs)
+        if not getattr(response, 'status_code', None):
+            logger.error(self.connection_refused_error(response))
+            self.error_handler(method, response)
+            return Response({'detail': 'connection refused'}, status=self.error_status_code)
+        return Response(response.json(), status=response.status_code)
+
+    def request_to_service(self, method: str, **kwargs) -> RequestResponse:
+        if method.lower() in self.http_method_names or self.get_additional_method_names():
+            handler = getattr(self, method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        kwargs['method'] = method
+        return handler(**kwargs)
+
+
+class MicroServiceConnect(ConnectionService):
+    SEND_COOKIES: bool = getattr(settings, 'REQUEST_SEND_COOKIES', False)
+    url_pagination_before = ''
+    url_pagination_after = ''
+    error_status_code = HTTP_500_INTERNAL_SERVER_ERROR
+
+    def __init__(self, request, url, **kwargs):
+        super().__init__(url, **kwargs)
+        self.request = request
+
+    @property
+    def headers(self) -> dict:
+        headers = super().headers
+        headers['Accept-Language'] = self.request.headers.get('Accept-Language')
+        headers['Remote-User'] = str(self.request.user.id)
         return headers
 
     def get_cookies(self) -> dict:
         return self.request.COOKIES
 
     def _requested_data(self) -> dict:
-        data = dict(
-            url=self.url,
-            headers=self.headers,
-            cookies=self.get_cookies() if self.SEND_COOKIES else None
-        )
+        data = super(MicroServiceConnect, self)._requested_data()
+        data.update({'cookies': self.get_cookies() if self.SEND_COOKIES else None})
         return data
 
     @request_shell
@@ -153,20 +205,7 @@ class MicroServiceConnect(Service):
         url = url.replace(self.url_pagination_before, self.url_pagination_after)
         return url
 
-    def service_response(self, method: str = None, **kwargs):
-        response = self.request_to_service(method=method, **kwargs)
-        if not getattr(response, 'status_code', None):
-            logger.error(self.connection_refused_error(response))
-            self.error_handler(method, response)
-            return Response({'detail': 'connection refused'}, status=self.error_status_code)
-        return Response(response.json(), status=response.status_code)
-
     def request_to_service(self, method: str = None, **kwargs) -> RequestResponse:
         if not method:
             method = self.request.method
-        if method.lower() in self.http_method_names or self.get_additional_method_names():
-            handler = getattr(self, method.lower(), self.http_method_not_allowed)
-        else:
-            handler = self.http_method_not_allowed
-        kwargs['method'] = method
-        return handler(**kwargs)
+        return super().request_to_service(method=method, **kwargs)
