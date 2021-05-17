@@ -1,3 +1,8 @@
+0.1.4.0 (2021-05-17)
+********************
+
+- Updated and renamed ConnectionService (Service) for opportunities to send requests throughout celery or signals, where request obj is not available
+
 0.1.3.6 (2021-05-12)
 ********************
 
