@@ -1,3 +1,8 @@
+0.1.4.1 (2021-05-18)
+********************
+
+- Fix bug whe remote user in custom headers has been rewritten by user_id
+
 0.1.4.0 (2021-05-17)
 ********************
 
