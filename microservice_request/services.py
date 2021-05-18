@@ -156,9 +156,11 @@ class MicroServiceConnect(ConnectionService):
 
     @property
     def headers(self) -> dict:
-        headers = super().headers
-        headers['Accept-Language'] = self.request.headers.get('Accept-Language')
-        headers['Remote-User'] = str(self.request.user.id)
+        headers = {
+            'Accept-Language': self.request.headers.get('Accept-Language'),
+            'Remote-User': str(self.request.user.id),
+        }
+        headers.update(super().headers)
         return headers
 
     def get_cookies(self) -> dict:
