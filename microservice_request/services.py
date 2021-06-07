@@ -154,6 +154,12 @@ class MicroServiceConnect(ConnectionService):
         super().__init__(url, **kwargs)
         self.request = request
 
+    @classmethod
+    def microservice_response(cls, request, reverse_url: str, method: str, **kwargs):
+        url = cls.reverse_url(reverse_url)
+        service = cls(request, url, **kwargs)
+        return service.service_response(method=method, **kwargs)
+
     @property
     def headers(self) -> dict:
         headers = {
