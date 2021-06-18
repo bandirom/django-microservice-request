@@ -43,6 +43,12 @@ class ConnectionService:
         self.host = HostService()
         self.set_url(str(url))
 
+    @classmethod
+    def microservice_response(cls, reverse_url: str, method: str, **kwargs):
+        url = cls.reverse_url(reverse_url)
+        service = cls(url, **kwargs)
+        return service.service_response(method=method, **kwargs)
+
     def _allowed_methods(self):
         return [m.upper() for m in self.http_method_names if hasattr(self, m)]
 
@@ -155,9 +161,10 @@ class MicroServiceConnect(ConnectionService):
         self.request = request
 
     @classmethod
-    def microservice_response(cls, request, reverse_url: str, method: str, **kwargs):
+    def microservice_response(cls, request, reverse_url: str, **kwargs):
         url = cls.reverse_url(reverse_url)
-        service = cls(request, url, **kwargs)
+        service = cls(request, url, special_headers=kwargs.pop('special_headers', {}))
+        method = kwargs.pop('method', None) or request.method
         return service.service_response(method=method, **kwargs)
 
     @property
