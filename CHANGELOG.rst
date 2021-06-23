@@ -1,3 +1,8 @@
+0.1.4.4 (2021-06-23)
+********************
+
+- Fix reverse_url in class method microservice_response
+
 0.1.4.3 (2021-06-19)
 ********************
 

@@ -162,7 +162,7 @@ class MicroServiceConnect(ConnectionService):
 
     @classmethod
     def microservice_response(cls, request, reverse_url: str, **kwargs):
-        url = cls.reverse_url(reverse_url)
+        url = cls.reverse_url(reverse_url, kwargs=kwargs.pop('url_kwargs', {}))
         service = cls(request, url, special_headers=kwargs.pop('special_headers', {}))
         method = kwargs.pop('method', None) or request.method
         return service.service_response(method=method, **kwargs)
