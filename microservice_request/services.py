@@ -118,7 +118,7 @@ class ConnectionService:
     @request_shell
     def put(self, data: dict, **kwargs):
         request_data = self._requested_data()
-        request_data.update(data=data)
+        request_data.update(json=data)
         return self.host.session.put(**request_data)
 
     @request_shell
@@ -199,7 +199,7 @@ class MicroServiceConnect(ConnectionService):
     @request_shell
     def put(self, data: dict = None, **kwargs):
         request_data = self._requested_data()
-        request_data.update(data=data or self.request.data)
+        request_data.update(json=data or self.request.data)
         return self.host.session.put(**request_data)
 
     @request_shell
