@@ -1,3 +1,8 @@
+0.1.4.6 (2021-07-28)
+********************
+
+- Added error process function when error occur in microservice
+
 0.1.4.5 (2021-06-25)
 ********************
 
