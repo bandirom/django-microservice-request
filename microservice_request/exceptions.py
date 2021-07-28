@@ -1,0 +1,3 @@
+
+class MicroserviceException(ValueError):
+    pass

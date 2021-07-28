@@ -1,4 +1,5 @@
 import logging
+from json.decoder import JSONDecodeError
 from typing import Union, List
 
 from django.conf import settings
@@ -11,6 +12,7 @@ from rest_framework.reverse import reverse_lazy
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from .decorators import request_shell
+from .exceptions import MicroserviceException
 
 logger = logging.getLogger(__name__)
 
@@ -134,12 +136,12 @@ class ConnectionService:
         return self.host.session.post(**request_data)
 
     def service_response(self, method: str = None, **kwargs):
-        response = self.request_to_service(method=method, **kwargs)
-        if not getattr(response, 'status_code', None):
-            logger.error(self.connection_refused_error(response))
-            self.error_handler(method, response)
+        self.response = self.request_to_service(method=method, **kwargs)
+        if not getattr(self.response, 'status_code', None):
+            logger.error(self.connection_refused_error(self.response))
+            self.error_handler(method, self.response)
             return Response({'detail': 'connection refused'}, status=self.error_status_code)
-        return Response(response.json(), status=response.status_code)
+        return Response(self._response(), status=self.response.status_code)
 
     def request_to_service(self, method: str, **kwargs) -> RequestResponse:
         if method.lower() in self.http_method_names or self.get_additional_method_names():
@@ -148,6 +150,15 @@ class ConnectionService:
             handler = self.http_method_not_allowed
         kwargs['method'] = method
         return handler(**kwargs)
+
+    def _response(self):
+        try:
+            return self.response.json()
+        except JSONDecodeError:
+            return self.error_process()
+
+    def error_process(self):
+        raise MicroserviceException(self.response.content)
 
 
 class MicroServiceConnect(ConnectionService):
@@ -180,7 +191,7 @@ class MicroServiceConnect(ConnectionService):
         return self.request.COOKIES
 
     def _requested_data(self) -> dict:
-        data = super(MicroServiceConnect, self)._requested_data()
+        data = super()._requested_data()
         data.update({'cookies': self.get_cookies() if self.SEND_COOKIES else None})
         return data
 
