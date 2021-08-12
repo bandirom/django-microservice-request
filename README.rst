@@ -1,4 +1,4 @@
-![GitHub](https://img.shields.io/github/license/bandirom/django-microservice-request)
+.. image:: https://img.shields.io/github/license/bandirom/django-microservice-request   :alt: GitHub
 
 Microservice-Request
 ====================
