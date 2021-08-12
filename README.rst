@@ -1,9 +1,10 @@
+![GitHub](https://img.shields.io/github/license/bandirom/django-microservice-request)
+
 Microservice-Request
 ====================
 
-Application for make sync requests (REST API) between microservices .
+Application for make sync requests (REST API) between microservices or external APIs.
 
-For testing you should have access to 2 or more projects (at least 1 project - should be Django Project)
 
 If you don't have any microservice yet, please follow the link
 https://github.com/bandirom/DjangoTemplateWithDocker
@@ -24,28 +25,71 @@ Quick start
         'microservice_request',
     ]
 
-3. In settings.py set the follow settings::
+3. In settings.py set the follow settings. This settings needed for set access to your project like external service::
 
     # Custom api key header
     API_KEY_HEADER = os.environ.get('API_KEY_HEADER', 'X-Custom-Header')
     # Custom api key
-    API_KEY = os.environ.get('API_KEY', 'api-secret-key')
+    API_KEY = os.environ.get('API_KEY', 'your-api-secret-key')
 
     # Requested header will be:
-    # Authorization: X-Custom-Header api-secret-key
+    # Authorization: X-Custom-Header your-api-secret-key
+
+    # Add permission to restframework block
+
+    REST_FRAMEWORK = {
+        'DEFAULT_PERMISSION_CLASSES': (
+            'microservice_request.permissions.HasApiKeyOrIsAuthenticated',
+        ),
+    }
 
 
-For key generating recommend to use
-https://florimondmanca.github.io/djangorestframework-api-key/
+ Now You can handle all requests from external services which have header:
+    `Authorization: X-Custom-Header your-api-secret-key`
 
 
+    For key generating recommend to use
+    https://florimondmanca.github.io/djangorestframework-api-key/
 
-3. For example you have 2 deployed projects. First project will be ApiGateway and second will be ArticleBlog
-    Create a new application for set separated route:
+
+4. Sending requests to an external services:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-        docker-compose exec web python manage.py startapp router_article
+For example you need to send request to the Payment service with some specific headers
 
-    or
 
-        python manage.py startapp router_article
+4.1 In settings.py::
+
+    PAYMENT_API_URL = "http://host.com:8080"
+    PAYMENT_API_KEY = "payment secret api key"
+
+4.2 create a file services.py::
+
+
+    from django.conf import settings
+    from microservice_request.services import MicroServiceConnect
+
+    class PaymentService(MicroServiceConnect):
+        service = settings.PAYMENT_API_URL
+        api_key = settings.PAYMENT_API_KEY
+
+
+4.3 in your code (for example in views.py)::
+
+    from .services import PaymentService
+
+    def post(self, request, *args, **kwargs):
+        """Ths method will work as proxy"""
+        request_method = 'post'
+        url = '/some/api/path/'
+        data = {
+            'key': 'value',
+        }
+        return PaymentService.microservice_response(
+            request,
+            reverse_url=url,
+            method=request_method,
+            data=data,
+            special_headers={'IfNeed': 'SomeAdditionalHeader'}
+        )
