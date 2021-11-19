@@ -1,3 +1,10 @@
+0.1.4.8 (2021-11-19)
+********************
+
+- added urljoin instead of concatenation
+- updated except_shell decorator
+
+
 0.1.4.7 (2021-08-19)
 ********************
 
