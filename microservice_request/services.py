@@ -1,6 +1,7 @@
 import logging
 from json.decoder import JSONDecodeError
 from typing import Union, List
+from urllib.parse import urljoin
 
 from django.conf import settings
 from requests import Session, Response as RequestResponse
@@ -68,7 +69,7 @@ class ConnectionService:
     def set_url(self, url) -> str:
         if url.startswith(self.lookup_prefix):
             url = url.replace(self.lookup_prefix, '', 1)
-        self.url = f"{self.service}{url}"
+        self.url = urljoin(self.service, url)
         return self.url
 
     @staticmethod
