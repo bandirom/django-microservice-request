@@ -1,3 +1,11 @@
+0.5.0 (2022-01-21)
+******************
+
+- added tests
+- code refactoring
+- tox, linters, cicd tests
+
+
 0.1.4.8 (2021-11-19)
 ********************
 

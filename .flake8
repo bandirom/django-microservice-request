@@ -1,0 +1,3 @@
+[flake8]
+exclude = .idea */migrations/* .tox .pytest .cache
+max-line-length = 120

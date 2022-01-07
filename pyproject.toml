@@ -1,0 +1,77 @@
+[tool.poetry]
+name = "django-microservice-request"
+version = "0.1.0"
+description = ""
+authors = ["bandirom"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+requests = "^2.27.1"
+
+[tool.poetry.dev-dependencies]
+tox = "^3.24.5"
+Django = "~=3.2"
+djangorestframework = "^3.13.1"
+black = "^21.12b0"
+flake8 = "^4.0.1"
+mypy = "^0.931"
+django-stubs = "^1.9.0"
+djangorestframework-stubs = "^1.4.0"
+types-requests = "^2.27.7"
+pytest = "^6.2.5"
+pytest-mock = "3.6.1"
+coverage = {version = "6.2", extras = ["toml"]}
+isort = "^5.10.1"
+
+[build-system]
+requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0", "poetry-core>=1.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.coverage.run]
+omit = [
+  "*/migrations/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "^\\s*@(abc.)?abstractmethod",
+  "^\\s*@(typing.)?overload",
+  "^\\s*if (typing.)?TYPE_CHECKING:",
+  "^\\s*if (settings.)?DEBUG:",
+  "pragma: no ?cover",
+  "def __repr__",
+  "def __str__",
+  "if self.debug:",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.mypy]
+python_version = "3.9"
+cache_dir = ".cache/mypy"
+disallow_untyped_defs = true
+
+
+[[tool.mypy.overrides]]
+module = ["*.migrations.*", "__init__"]
+ignore_errors = true
+
+
+[tool.doc8]
+max_line_length = 110
+
+[tool.black]
+line-length = 110
+exclude = 'migrations|\.tox|\.mypy_cache|\.git|build|dist|\.cache'
+
+[tool.isort]
+profile = "black"
+line_length = 110
+skip = ["migrations", ".cache"]
+
+[tool.pytest.ini_options]
+cache_dir = ".cache/pytest"

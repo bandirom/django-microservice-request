@@ -1,6 +1,10 @@
 .. image:: https://img.shields.io/github/license/bandirom/django-microservice-request   :alt: GitHub
 
 
+.. image:: https://codecov.io/gh/bandirom/django-microservice-request/branch/cicd/tox/graph/badge.svg?token=8V0XKTUF3G
+:target: https://codecov.io/gh/bandirom/django-microservice-request
+
+
 Microservice-Request
 ====================
 
