@@ -1,7 +1,9 @@
 from unittest import mock
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.test import override_settings
+from django.test.client import RequestFactory
 from django.urls import path
 from django.views.generic import TemplateView
 from requests import Response
@@ -10,16 +12,46 @@ from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response as DRFResponse
 from rest_framework.reverse import reverse, reverse_lazy
 from rest_framework.test import APITestCase
+from rest_framework.views import APIView
 
 from microservice_request.decorators import request_shell
 from microservice_request.exceptions import MicroserviceException
-from microservice_request.services import ConnectionService
+from microservice_request.services import ConnectionService, MicroServiceConnect
 from microservice_request.test import RequestTestCaseMixin
 
 User = get_user_model()
 
+
+class TestConnectionService(ConnectionService):
+    api_key = "12345-qwerty-98765"
+    service = "https://api.external-service.com"
+    custom_methods = ["send_cbor_encoded_data"]
+
+    def custom_headers(self) -> dict:
+        return {
+            "X-Custom-Field": "ABC",
+        }
+
+    @request_shell
+    def send_cbor_encoded_data(self, **kwargs):
+        return self._method("post", data=kwargs.get("data"))
+
+
+class GatewayProxyService(MicroServiceConnect):
+    service = "http://container:8000"
+    api_key = "sadwqe.qweoj23aQ"
+    PROXY_REMOTE_USER = True
+
+
+class ProductProxyView(APIView):
+    def get(self, request):
+        url = "/api/v1/products/"
+        return GatewayProxyService(request, url).service_response(data=request.data)
+
+
 urlpatterns = [
     path("api/v1/test/", TemplateView.as_view(), name="test_external_url"),
+    path("api/v2/products/", ProductProxyView.as_view(), name="test_proxy"),
 ]
 
 
@@ -95,22 +127,8 @@ class ConnectionServiceTestCase(RequestTestCaseMixin, APITestCase):
 
 @override_settings(ROOT_URLCONF="tests.test_services")
 class ChildServiceTestCase(RequestTestCaseMixin, APITestCase):
-    class TestConnectionService(ConnectionService):
-        api_key = "12345-qwerty-98765"
-        service = "https://api.external-service.com"
-        custom_methods = ["send_cbor_encoded_data"]
-
-        def custom_headers(self) -> dict:
-            return {
-                "X-Custom-Field": "ABC",
-            }
-
-        @request_shell
-        def send_cbor_encoded_data(self, **kwargs):
-            return self._method("post", data=kwargs.get("data"))
-
     def setUp(self):
-        self.service = self.TestConnectionService(url="/api/v1/connect")
+        self.service = TestConnectionService(url="/api/v1/connect")
 
     def test_auth_api_keys(self):
         self.assertEqual(
@@ -125,10 +143,10 @@ class ChildServiceTestCase(RequestTestCaseMixin, APITestCase):
         self.assertEqual(self.service.url, "https://api.external-service.com/api/v1/test/")
         self.service.set_url(reverse_lazy("test_external_url"))
         self.assertEqual(self.service.url, "https://api.external-service.com/api/v1/test/")
-        service = self.TestConnectionService(reverse("test_external_url"))
+        service = TestConnectionService(reverse("test_external_url"))
         self.assertEqual(service.url, "https://api.external-service.com/api/v1/test/")
-        url = self.TestConnectionService.reverse_url("test_external_url")
-        service = self.TestConnectionService(url)
+        url = TestConnectionService.reverse_url("test_external_url")
+        service = TestConnectionService(url)
         self.assertEqual(service.url, "https://api.external-service.com/api/v1/test/")
 
     def test_custom_methods(self):
@@ -149,6 +167,58 @@ class ChildServiceTestCase(RequestTestCaseMixin, APITestCase):
         mock_resp = self._mock_response(json=json_data, status_code=status.HTTP_200_OK)
         mocked_request.return_value = mock_resp
         url = "/oauth/init/"
-        response = self.TestConnectionService.microservice_response(url, "post", data={"status": True})
+        response = TestConnectionService.microservice_response(url, "post", data={"status": True})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, json_data)
+
+
+@override_settings(ROOT_URLCONF="tests.test_services")
+class ProxyTestCase(RequestTestCaseMixin, APITestCase):
+    def setUp(self):
+        # Every test needs access to the request factory.
+        self.factory = RequestFactory()
+
+    @mock.patch("microservice_request.services.ConnectionService._method")
+    def test_simple_proxy(self, mocked_request):
+        json_data = {
+            "count": 1,
+            "next": None,
+            "previous": None,
+            "results": [
+                {
+                    "id": 5,
+                    "title": "Awesome product",
+                    "description": "Description",
+                }
+            ],
+        }
+        mock_resp = self._mock_response(json=json_data, status_code=status.HTTP_200_OK)
+        mocked_request.return_value = mock_resp
+
+        url = reverse("test_proxy")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, json_data)
+
+    def test_headers(self):
+        request = self.factory.get("/ping")
+        request.user = AnonymousUser()
+        service = GatewayProxyService(request, url="/ping/")
+        expected_headers = {"Accept-Language": None, "Authorization": "ACCESS-KEY sadwqe.qweoj23aQ"}
+        self.assertEqual(service.headers, expected_headers)
+
+    def test_headers_with_remote_user(self):
+        user = User.objects.create_user(
+            username="test_admin",
+            password="test_password",
+        )
+        request = self.factory.get("/test/1/")
+        request.user = user
+        service = GatewayProxyService(request, url="/ping/")
+        service.PROXY_REMOTE_USER = True
+        expected_headers = {
+            "Accept-Language": None,
+            "Remote-User": "1",
+            "Authorization": "ACCESS-KEY sadwqe.qweoj23aQ",
+        }
+        self.assertEqual(service.headers, expected_headers)
