@@ -10,7 +10,7 @@ Documentation/
 .project
 .idea
 .vscode
-.coverage
+.coverage*
 *.sqlite3
 .cache/
 htmlcov/

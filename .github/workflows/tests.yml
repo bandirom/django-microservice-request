@@ -1,0 +1,60 @@
+name: Tests
+
+env:
+  COVERAGE_THRESHOLD: 95
+
+on:
+  push:
+  pull_request:
+  pull_request_target:
+
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10" ]
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip setuptools poetry
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --no-ansi
+      - name: Run tox
+        run: |
+          tox
+  test_black:
+    runs-on: ubuntu-latest
+    steps:
+      - name: CheckOut Repo
+        uses: actions/checkout@v2
+      - name: Run the black
+        id: tests
+        run: |
+          pip install black
+          black . --check
+  test_flake8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: CheckOut Repo
+        uses: actions/checkout@v2
+      - name: Run flake8
+        run: |
+          pip install flake8
+          flake8 .
+  test_isort:
+    runs-on: ubuntu-latest
+    steps:
+      - name: CheckOut Repo
+        uses: actions/checkout@v2
+      - name: Run isort
+        run: |
+          pip install isort
+          isort --check-only --diff .

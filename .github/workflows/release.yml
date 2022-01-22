@@ -2,14 +2,18 @@ name: Upload Python Package django_microservice_request
 
 on:
   push:
-    branches: [ master ]
+    tags:
+      - "v*"
 
 jobs:
-  deploy:
-
+  release:
+    name: "Release"
     runs-on: ubuntu-latest
-
     steps:
+    - uses: marvinpinto/action-automatic-releases@latest
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        prerelease: false
     - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -22,7 +26,7 @@ jobs:
     - name: Build package
       run: python -m build
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: ${{ secrets.USERNAME }}
         password: ${{ secrets.PYPI_API_TOKEN }}

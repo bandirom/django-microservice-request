@@ -3,7 +3,6 @@ from functools import wraps
 
 from requests.exceptions import RequestException
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -16,7 +15,9 @@ def except_shell(errors=(Exception,)):
             except errors as e:
                 logging.error(e)
                 return None
+
         return wrapper
+
     return decorator
 
 

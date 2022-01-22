@@ -1,0 +1,30 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip setuptools poetry
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --no-ansi
+      - name: "Run coverage"
+        run: |
+          coverage run --source microservice_request -m django test --settings=tests.settings
+          coverage xml
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: .
