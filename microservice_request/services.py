@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urljoin
 
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from requests import Response as RequestResponse
 from requests import Session
 from requests.adapters import HTTPAdapter
@@ -140,6 +141,8 @@ class ConnectionService:
 
 class MicroServiceConnect(ConnectionService):
     SEND_COOKIES: bool = getattr(settings, "REQUEST_SEND_COOKIES", False)
+    PROXY_REMOTE_USER: bool = False
+
     url_pagination_before = ""
     url_pagination_after = ""
 
@@ -147,19 +150,13 @@ class MicroServiceConnect(ConnectionService):
         super().__init__(url, **kwargs)
         self.request = request
 
-    @classmethod
-    def microservice_response(cls, request, reverse_url: str, **kwargs):
-        url: str = cls.reverse_url(reverse_url, kwargs=kwargs.pop("url_kwargs", {}))
-        service = cls(request, url, special_headers=kwargs.pop("special_headers", {}))
-        method: str = kwargs.pop("method", None) or request.method
-        return service.service_response(method=method, **kwargs)
-
     @property
     def headers(self) -> dict:
         headers: dict = {
             "Accept-Language": self.request.headers.get("Accept-Language"),
-            "Remote-User": str(self.request.user.id),
         }
+        if self.PROXY_REMOTE_USER and not isinstance(self.request.user, AnonymousUser):
+            headers.update({"Remote-User": str(self.request.user.id)})
         headers.update(super().headers)
         return headers
 
@@ -169,7 +166,8 @@ class MicroServiceConnect(ConnectionService):
 
     def _request_params(self) -> dict:
         data: dict = super()._request_params()
-        data.update({"cookies": self.cookies if self.SEND_COOKIES else None})
+        if self.SEND_COOKIES:
+            data["cookies"] = self.cookies
         return data
 
     @request_shell
@@ -184,6 +182,6 @@ class MicroServiceConnect(ConnectionService):
         url: str = url.replace(self.url_pagination_before, self.url_pagination_after)
         return url
 
-    def request_to_service(self, method: str = None, **kwargs) -> RequestResponse:
+    def service_response(self, method: str = None, **kwargs) -> Response:
         method: str = method or self.request.method
-        return super().request_to_service(method=method, **kwargs)
+        return super().service_response(method, **kwargs)
