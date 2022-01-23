@@ -70,6 +70,7 @@ exclude = 'migrations|\.tox|\.mypy_cache|\.git|build|dist|\.cache'
 
 [tool.isort]
 profile = "black"
+multi_line_output = 3
 line_length = 110
 skip = ["migrations", ".cache"]
 
