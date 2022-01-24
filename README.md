@@ -23,15 +23,15 @@ Quick start
 
 ### Custom api key header
 
-    `API_KEY_HEADER = os.environ.get('API_KEY_HEADER', 'X-Custom-Header')`
+    API_KEY_HEADER = os.environ.get('API_KEY_HEADER', 'X-Custom-Header')
 
 ### Custom api key
 
-    `API_KEY = os.environ.get('API_KEY', 'your-api-secret-key')`
+    API_KEY = os.environ.get('API_KEY', 'your-api-secret-key')
 
 ### Requested header will be:
 
-    `Authorization: X-Custom-Header your-api-secret-key`
+    Authorization: X-Custom-Header your-api-secret-key
 
 ### Add permission to restframework block
 
@@ -45,7 +45,7 @@ REST_FRAMEWORK = {
 
  Now You can handle all requests from external services which have header:
 
-    `Authorization: X-Custom-Header your-api-secret-key`
+    Authorization: X-Custom-Header your-api-secret-key
 
 
 ####For key generating recommend to use
@@ -84,12 +84,9 @@ from .services import PaymentService
 def post(self, request, *args, **kwargs):
     """Ths method will work as proxy"""
     url = '/some/api/path/'
-    data = {
-        'key': 'value',
-    }
     return PaymentService(url=url).service_response(
         method='post',
-        data=data,
+        data=request.data,
         special_headers={'IfNeed': 'SomeAdditionalHeader'}
     )
 ```
