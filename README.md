@@ -1,7 +1,6 @@
 ![GitHub](https://img.shields.io/github/license/bandirom/django-microservice-request)
 [![codecov](https://codecov.io/gh/bandirom/django-microservice-request/branch/master/graph/badge.svg?token=8V0XKTUF3G)](https://codecov.io/gh/bandirom/django-microservice-request)
 [![Tests](https://github.com/bandirom/django-microservice-request/actions/workflows/tests.yml/badge.svg)](https://github.com/bandirom/django-microservice-request/actions/workflows/tests.yml)
-[![Github All Releases](https://img.shields.io/github/downloads/bandirom/django-microservice-request/total.svg?style=plastic)]()
 
 Microservice-Request
 ====================
