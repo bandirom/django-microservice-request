@@ -1,11 +1,10 @@
 import logging
 from json.decoder import JSONDecodeError
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from requests import Response as RequestResponse
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -16,6 +15,10 @@ from rest_framework.reverse import reverse
 
 from .decorators import request_shell
 from .exceptions import MicroserviceException
+
+if TYPE_CHECKING:
+    from requests import Response as RequestResponse
+
 
 logger = logging.getLogger(__name__)
 
@@ -100,11 +103,11 @@ class ConnectionService:
         return dict(url=self.url, headers=self.headers)
 
     @request_shell
-    def _method(self, method: str, **kwargs) -> Optional[RequestResponse]:
+    def _method(self, method: str, **kwargs) -> Optional["RequestResponse"]:
         return self.host.session.request(method=method, **self._request_params(), **kwargs)
 
     @request_shell
-    def send_file(self, files: dict, data: dict = None, **kwargs):
+    def send_file(self, files: dict, data: dict = None, **kwargs) -> Optional["RequestResponse"]:
         request_data = self._request_params()
         request_data.update(data=data, files=files)
         return self.host.session.post(**request_data)
@@ -121,7 +124,7 @@ class ConnectionService:
             content_type=response.headers.get("Content-Type"),
         )
 
-    def request_to_service(self, method: str, **kwargs) -> RequestResponse:
+    def request_to_service(self, method: str, **kwargs) -> "RequestResponse":
         method: str = method.lower()
         if method in self.http_method_names:
             return self._method(method, **kwargs)
@@ -129,7 +132,7 @@ class ConnectionService:
             return handler(**kwargs)
         self.http_method_not_allowed(method)
 
-    def _response(self, response: RequestResponse) -> JSONType:
+    def _response(self, response: "RequestResponse") -> JSONType:
         try:
             return response.json()
         except JSONDecodeError:
