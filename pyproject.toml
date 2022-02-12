@@ -6,22 +6,22 @@ authors = ["bandirom"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-requests = "^2.27.1"
+requests = "~=2.27"
 
 [tool.poetry.dev-dependencies]
-tox = "^3.24.5"
-Django = "~=3.2"
-djangorestframework = "^3.13.1"
-black = "^21.12b0"
-flake8 = "^4.0.1"
+tox = "~=3.24"
+django = "~=3.2"
+djangorestframework = "~=3.13"
+black = "~=22.1"
+flake8 = "~=4.0"
 mypy = "^0.931"
-django-stubs = "^1.9.0"
-djangorestframework-stubs = "^1.4.0"
-types-requests = "^2.27.7"
-pytest = "^6.2.5"
-pytest-mock = "3.6.1"
-coverage = {version = "6.2", extras = ["toml"]}
-isort = "^5.10.1"
+django-stubs = "~=1.9"
+djangorestframework-stubs = "~=1.4"
+types-requests = "~=2.27"
+pytest = "~=7.0"
+pytest-mock = "~=3.7"
+coverage = {version = "~=6.3", extras = ["toml"]}
+isort = "~=5.10"
 
 [build-system]
 requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0", "poetry-core>=1.0.0"]
