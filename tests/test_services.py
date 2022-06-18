@@ -204,7 +204,11 @@ class ProxyTestCase(RequestTestCaseMixin, APITestCase):
         request = self.factory.get("/ping")
         request.user = AnonymousUser()
         service = GatewayProxyService(request, url="/ping/")
-        expected_headers = {"Accept-Language": None, "Authorization": "ACCESS-KEY sadwqe.qweoj23aQ"}
+        expected_headers = {
+            "Accept-Language": None,
+            "Authorization": "ACCESS-KEY sadwqe.qweoj23aQ",
+            "Host": "testserver",
+        }
         self.assertEqual(service.headers, expected_headers)
 
     def test_headers_with_remote_user(self):
@@ -220,5 +224,6 @@ class ProxyTestCase(RequestTestCaseMixin, APITestCase):
             "Accept-Language": None,
             "Remote-User": "1",
             "Authorization": "ACCESS-KEY sadwqe.qweoj23aQ",
+            "Host": "testserver",
         }
         self.assertEqual(service.headers, expected_headers)
