@@ -157,6 +157,7 @@ class MicroServiceConnect(ConnectionService):
     def headers(self) -> dict:
         headers: dict = {
             "Accept-Language": self.request.headers.get("Accept-Language"),
+            "Host": self.request.get_host(),
         }
         if self.PROXY_REMOTE_USER and not isinstance(self.request.user, AnonymousUser):
             headers.update({"Remote-User": str(self.request.user.id)})
