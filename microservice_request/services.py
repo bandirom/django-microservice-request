@@ -146,9 +146,6 @@ class MicroServiceConnect(ConnectionService):
     SEND_COOKIES: bool = getattr(settings, "REQUEST_SEND_COOKIES", False)
     PROXY_REMOTE_USER: bool = False
 
-    url_pagination_before = ""
-    url_pagination_after = ""
-
     def __init__(self, request, url, **kwargs):
         super().__init__(url, **kwargs)
         self.request = request
@@ -179,12 +176,6 @@ class MicroServiceConnect(ConnectionService):
         request_data: dict = self._request_params()
         request_data.update(data=data or self.request.data, files=files)
         return self.host.session.post(**request_data)
-
-    def convert_service_url(self, url: str) -> str:
-        """For pagination response"""
-        url: str = url.replace(self.service, getattr(settings, "GATEWAY_HOST", self.request.get_host()))
-        url: str = url.replace(self.url_pagination_before, self.url_pagination_after)
-        return url
 
     def service_response(self, method: str = None, **kwargs) -> Response:
         method: str = method or self.request.method
