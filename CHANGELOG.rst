@@ -1,3 +1,10 @@
+0.5.2 (2022-06-18)
+******************
+
+- added Host header from request to MicroServiceConnect
+- deleted **convert_service_url** method from MicroServiceConnect
+
+
 0.5.1 (2022-01-27)
 ******************
 
