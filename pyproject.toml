@@ -1,18 +1,18 @@
 [tool.poetry]
 name = "django-microservice-request"
-version = "0.1.0"
+version = "0.5.2"
 description = ""
 authors = ["bandirom"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-requests = "~=2.27"
+requests = "~=2.28"
 
 [tool.poetry.dev-dependencies]
-tox = "~=3.24"
+tox = "~=3.25"
 django = "~=3.2"
 djangorestframework = "~=3.13"
-black = "~=22.1"
+black = "~=22.3"
 flake8 = "~=4.0"
 mypy = "^0.931"
 django-stubs = "~=1.9"
@@ -20,7 +20,7 @@ djangorestframework-stubs = "~=1.4"
 types-requests = "~=2.27"
 pytest = "~=7.0"
 pytest-mock = "~=3.7"
-coverage = {version = "~=6.3", extras = ["toml"]}
+coverage = {version = "~=6.4", extras = ["toml"]}
 isort = "~=5.10"
 
 [build-system]
