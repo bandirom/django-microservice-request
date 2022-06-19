@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-microservice-request"
-version = "0.5.2"
+version = "0.5.3"
 description = ""
 authors = ["bandirom"]
 
