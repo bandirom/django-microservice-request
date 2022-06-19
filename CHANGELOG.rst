@@ -2,6 +2,7 @@
 ******************
 
 - fixed Pypi setup file
+- `url` is optional in `__init__`. If url = None, `url = service`
 
 
 0.5.2 (2022-06-18)
