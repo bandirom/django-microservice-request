@@ -49,10 +49,10 @@ class ConnectionService:
     additional_methods: list = ["send_file"]
     custom_methods: list = []
 
-    def __init__(self, url: str, **kwargs):
+    def __init__(self, url: str = None, **kwargs):
         self.special_headers: dict = kwargs.get("special_headers", {})
         self.host = HostService()
-        self.set_url(str(url))
+        self.set_url(url)
 
     @classmethod
     def microservice_response(cls, url: str, method: str, **kwargs):
@@ -67,8 +67,11 @@ class ConnectionService:
     def authorization_header(self) -> dict:
         return {"Authorization": f"{self.api_header} {self.api_key}"}
 
-    def set_url(self, url: str) -> str:
-        if url.startswith(self.lookup_prefix):
+    def set_url(self, url: Optional[str]) -> str:
+        if not url:
+            self.url = self.service
+            return self.url
+        elif url.startswith(self.lookup_prefix):
             url = url.replace(self.lookup_prefix, "", 1)
         self.url = urljoin(self.service or "", url)
         return self.url

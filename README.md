@@ -33,7 +33,7 @@ Quick start
 
     Authorization: X-Custom-Header your-api-secret-key
 
-### Add permission to restframework block
+### Add permission to rest_framework block
 
 ```python
 REST_FRAMEWORK = {
@@ -91,3 +91,22 @@ def post(self, request, *args, **kwargs):
     )
 ```
 
+
+# Contribute
+* Run the tests
+
+```shell
+tox
+```
+
+* How to build whl file
+
+```shell
+python -m build
+```
+
+* How to build project files
+
+```shell
+python setup.py build
+```

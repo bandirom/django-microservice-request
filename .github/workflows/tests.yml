@@ -58,3 +58,14 @@ jobs:
         run: |
           pip install isort
           isort --check-only --diff .
+  test_twine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: CheckOut Repo
+        uses: actions/checkout@v2
+      - name: Install twine
+        run: pip install twine build
+      - name: Build project
+        run: python -m build
+      - name: Run twine test
+        run: twine check dist/*
