@@ -69,8 +69,8 @@ class ConnectionService:
 
     def set_url(self, url: Optional[str]) -> str:
         if not url:
-            self._url = self.service
-            return self._url
+            self.url = self.service
+            return self.url
         elif url.startswith(self.lookup_prefix):
             url = url.replace(self.lookup_prefix, "", 1)
         self.url = urljoin(self.service or "", url)

@@ -171,6 +171,13 @@ class ChildServiceTestCase(RequestTestCaseMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, json_data)
 
+    def test_url_without_arg(self):
+        class TestService(ConnectionService):
+            service = "https://google.com/recaptcha/api/siteverify"
+
+        service = TestService()
+        self.assertEqual(service.url, "https://google.com/recaptcha/api/siteverify")
+
 
 @override_settings(ROOT_URLCONF="tests.test_services")
 class ProxyTestCase(RequestTestCaseMixin, APITestCase):
